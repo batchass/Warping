@@ -1,35 +1,29 @@
 /*
- Copyright (c) 2010-2013, Paul Houx - All rights reserved.
- This code is intended for use with the Cinder C++ library: http://libcinder.org
+Copyright (c) 2010-2013, Paul Houx - All rights reserved.
+This code is intended for use with the Cinder C++ library: http://libcinder.org
 
- This file is part of Cinder-Warping.
+This file is part of Cinder-Warping.
 
- Cinder-Warping is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- Cinder-Warping is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
+Cinder-Warping is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Cinder-Warping is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "WarpingApp.h"
-
-
 
 using namespace ci;
 using namespace ci::app;
 using namespace ph::warping;
 using namespace std;
-
-
-
 
 // add image
 void WarpingApp::addImage()
@@ -40,10 +34,8 @@ void WarpingApp::addImage()
 		// an empty string means the user canceled
 		if( ! p.empty() ) 
 		{ 
-
 			mChannel = Channel32f( loadImage( p ) );
 			mImage = mChannel;
-
 		}
 	}
 	catch( ... ) {
@@ -57,49 +49,46 @@ void WarpingApp::addMovie()
 	if( ! moviePath.empty() )
 		loadMovieFile( moviePath );
 }
-void WarpingApp::addActiveMovie( qtime::MovieGl movie )
-{
-	console() << "Dimensions:" << movie.getWidth() << " x " << movie.getHeight() << std::endl;
-	console() << "Duration:  " << movie.getDuration() << " seconds" << std::endl;
-	console() << "Frames:    " << movie.getNumFrames() << std::endl;
-	console() << "Framerate: " << movie.getFramerate() << std::endl;
-	movie.setLoop( true, false );
 
-	mMovies.push_back( movie );
-	movie.play();
+void WarpingApp::fileDrop( FileDropEvent event )
+{
+	loadMovieFile( event.getFile( 0 ) );
 }
 void WarpingApp::loadMovieFile( const fs::path &moviePath )
 {
 	qtime::MovieGl movie;
 
-	try {
+	try 
+	{
 		movie = qtime::MovieGl( moviePath );
+		movie.setVolume(0.0f);
+		console() << "Dimensions:" << movie.getWidth() << " x " << movie.getHeight() << std::endl;
+		console() << "Duration:  " << movie.getDuration() << " seconds" << std::endl;
+		console() << "Frames:    " << movie.getNumFrames() << std::endl;
+		console() << "Framerate: " << movie.getFramerate() << std::endl;
+		movie.setLoop( true, false );
 
-		addActiveMovie( movie );
+		mMovies.push_back( movie );
+		movie.play();
 		mLastPath = moviePath;
 	}
-	catch( ... ) {
+	catch( ... )
+	{
 		console() << "Unable to load the movie." << std::endl;
 		return;
 	}
 
-	try {
-		movie.setupMonoFft( 8 );
-	}
-	catch( qtime::QuickTimeExcFft & ) {
-		console() << "Unable to setup FFT" << std::endl;
-	}
 }
 void WarpingApp::prepareSettings( Settings *settings )
 {
 
-	settings->setWindowSize( 1024, 768 );
+	settings->setWindowSize( 450, 400 );
 	settings->setFrameRate( 60.0f );
 	settings->enableConsoleWindow();
 }
 void WarpingApp::setup()
 {
-	mUseBeginEnd = false;
+	mUseBeginEnd = true;
 	updateWindowTitle();
 
 	// initialize warps
@@ -118,7 +107,7 @@ void WarpingApp::setup()
 	// load test image
 	try
 	{ 
-		mImage = gl::Texture( loadImage( loadAsset("help.png") ) );
+		mImage = gl::Texture( loadImage( loadAsset("voletshaut.jpg") ) );
 
 		mSrcArea = mImage.getBounds();
 
@@ -129,14 +118,13 @@ void WarpingApp::setup()
 	{
 		console() << e.what() << std::endl;
 	}
-		// Display sizes
+	// Display sizes
 	mMainDisplayWidth = Display::getMainDisplay()->getWidth();
 	mRenderX = mMainDisplayWidth;
 	mRenderY = 0;
 	for (auto display : Display::getDisplays() )
 	{
-		std::cout << "Reso:" << display->getHeight() << "\n"; //getSize()
-		//display->getMainDisplay
+		//std::cout << "Reso:" << display->getHeight() << "\n"; 
 		mRenderWidth = display->getWidth();
 		mRenderHeight = display->getHeight();
 	}
@@ -233,7 +221,6 @@ void WarpingApp::draw()
 	else
 	{
 		gl::color( Color::white() );
-
 		if( mImage ) 
 		{
 			// iterate over the warps and draw their content

@@ -42,6 +42,7 @@ public:
 	void shutdown();
 	void update();
 	void draw();
+	void fileDrop( FileDropEvent event );
 	
 	void resize();
 	
@@ -58,7 +59,6 @@ public:
 	void addImage();
 	// qtime
 	void addMovie();
-	void addActiveMovie( qtime::MovieGl movie );
 	void loadMovieFile( const fs::path &path );
 	// windows mgmt
 	void createNewWindow();
