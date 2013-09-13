@@ -88,5 +88,9 @@ private:
 	ci::params::InterfaceGl	mParams;
 	//Particles
 	Channel32f mChannel;
-
+	// Reymenta
+	void				quitProgram();
+	ColorAf				mBackgroundColor;
+	ColorAf				mColor;
+	osc::Listener 		receiver;
 };

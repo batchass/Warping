@@ -57,7 +57,6 @@ void WarpingApp::fileDrop( FileDropEvent event )
 void WarpingApp::loadMovieFile( const fs::path &moviePath )
 {
 	qtime::MovieGl movie;
-
 	try 
 	{
 		movie = qtime::MovieGl( moviePath );
@@ -134,7 +133,7 @@ void WarpingApp::setup()
 	mParams.addParam( "Render Window Y",		&mRenderY,										"" );
 	mParams.addParam( "Render Window Width",	&mRenderWidth,									"" );
 	mParams.addParam( "Render Window Height",	&mRenderHeight,									"" );
-	mParams.addButton( "Create window",			bind( &WarpingApp::createNewWindow, this ),	"key=n" );
+	mParams.addButton( "Create window",			bind( &WarpingApp::createNewWindow, this ),		"key=n" );
 	mParams.addButton( "Delete windows",		bind( &WarpingApp::deleteWindows, this ),		"key=d" );
 	mParams.addButton( "Add movie",				bind( &WarpingApp::addMovie, this ),			"key=o" );
 	mParams.addButton( "Open image",			bind( &WarpingApp::addImage, this ),			"key=i" );
@@ -146,6 +145,8 @@ void WarpingApp::setup()
 	controlWindow->getSignalClose().connect(
 		[uniqueId,this] { shutdown(); this->console() << "You quit console window #" << uniqueId << std::endl; }
 	);
+	receiver.setup( 10007 );
+	createNewWindow();
 }
 void WarpingApp::createNewWindow()
 {
@@ -203,7 +204,38 @@ void WarpingApp::shutdown()
 
 void WarpingApp::update()
 {
-	// there is nothing to update
+	while( receiver.hasWaitingMessages() ) {
+		osc::Message m;
+		receiver.getNextMessage( &m );
+
+		console() << "New message received" << std::endl;
+		console() << "Address: " << m.getAddress() << std::endl;
+		console() << "Num Arg: " << m.getNumArgs() << std::endl;
+
+		if(m.getAddress() == "/warp/usebeginend"){
+			mUseBeginEnd = !mUseBeginEnd;
+		}		
+		else if(m.getAddress() == "/warp/loadimage"){
+			fs::path imagePath = m.getArgAsString(0);
+			mChannel = Channel32f( loadImage( imagePath ) );
+			mImage = mChannel;
+			mSrcArea = mImage.getBounds();
+			// adjust the content size of the warps
+			Warp::setSize( mWarps, mImage.getSize() );
+		}		
+		else if(m.getAddress() == "/warp/loadmovie"){
+			fs::path moviePath = m.getArgAsString(0);
+			loadMovieFile( moviePath );
+		}		
+		else if(m.getAddress() == "/quit"){
+			quitProgram();
+		}		
+		else{
+			// unrecognized message
+			//cout << "not recognized:" << m.getAddress() << endl;
+		}
+
+	}
 }
 
 void WarpingApp::draw()
@@ -259,11 +291,10 @@ void WarpingApp::draw()
 							float x = drawOffsetX;
 							float y = ( getWindowHeight() - drawHeight ) / 2.0f;			
 
-							gl::color( Color::white() );
-							//gl::draw( texture, Rectf( x, y, x + drawWidth, y + drawHeight ) );
+							gl::color( Color::white() );						
+							mSrcArea = texture.getBounds();
 							warp->draw( texture, mSrcArea );
 							texture.disable();
-							//drawFFT( mMovies[m], x, y, drawWidth, drawHeight );
 						}
 						drawOffsetX += getWindowWidth() * relativeWidth;
 					}
@@ -376,5 +407,8 @@ void WarpingApp::updateWindowTitle()
 	else
 		getWindow()->setTitle("Warping Sample - Using draw()");
 }
-
+void WarpingApp::quitProgram()
+{
+	shutdown();
+}
 CINDER_APP_BASIC( WarpingApp, RendererGl )
