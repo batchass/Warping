@@ -20,11 +20,6 @@ along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "WarpingApp.h"
 
-using namespace ci;
-using namespace ci::app;
-using namespace ph::warping;
-using namespace std;
-
 // add image
 void WarpingApp::addImage()
 {

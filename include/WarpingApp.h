@@ -84,9 +84,7 @@ private:
 	int						mRenderHeight;
 	float					mFrameRate;
 	bool					mFullScreen;
-	bool					mFluid;
 	ci::params::InterfaceGl	mParams;
-	//Particles
 	Channel32f mChannel;
 	// Reymenta
 	void				quitProgram();
