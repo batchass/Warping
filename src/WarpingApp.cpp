@@ -29,8 +29,11 @@ void WarpingApp::addImage()
 		// an empty string means the user canceled
 		if( ! p.empty() ) 
 		{ 
-			mChannel = Channel32f( loadImage( p ) );
-			mImage = mChannel;
+			mImage = loadImage( p );
+			mSrcArea = mImage.getBounds();
+			// adjust the content size of the warps
+			Warp::setSize( mWarps, mImage.getSize() );
+
 		}
 	}
 	catch( ... ) {
@@ -102,9 +105,7 @@ void WarpingApp::setup()
 	try
 	{ 
 		mImage = gl::Texture( loadImage( loadAsset("voletshaut.jpg") ) );
-
 		mSrcArea = mImage.getBounds();
-
 		// adjust the content size of the warps
 		Warp::setSize( mWarps, mImage.getSize() );
 	}
@@ -128,6 +129,7 @@ void WarpingApp::setup()
 	mParams.addParam( "Render Window Y",		&mRenderY,										"" );
 	mParams.addParam( "Render Window Width",	&mRenderWidth,									"" );
 	mParams.addParam( "Render Window Height",	&mRenderHeight,									"" );
+	mParams.addParam( "Image or video",			&mUseBeginEnd,									"" );
 	mParams.addButton( "Create window",			bind( &WarpingApp::createNewWindow, this ),		"key=n" );
 	mParams.addButton( "Delete windows",		bind( &WarpingApp::deleteWindows, this ),		"key=d" );
 	mParams.addButton( "Add movie",				bind( &WarpingApp::addMovie, this ),			"key=o" );
@@ -193,7 +195,6 @@ void WarpingApp::shutdown()
 	// save warp settings
 	fs::path settings = getAssetPath("") / "warps.xml";
 	Warp::writeSettings( mWarps, writeFile( settings ) );
-	// needed?
 	WarpingApp::quit();
 }
 
@@ -212,8 +213,7 @@ void WarpingApp::update()
 		}		
 		else if(m.getAddress() == "/warp/loadimage"){
 			fs::path imagePath = m.getArgAsString(0);
-			mChannel = Channel32f( loadImage( imagePath ) );
-			mImage = mChannel;
+			mImage = loadImage( imagePath );
 			mSrcArea = mImage.getBounds();
 			// adjust the content size of the warps
 			Warp::setSize( mWarps, mImage.getSize() );
@@ -235,13 +235,13 @@ void WarpingApp::update()
 
 void WarpingApp::draw()
 {
-	// clear the window and set the drawing color to white
 	// clear out the window with transparency
 	gl::clear( ColorAf( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
 	// Draw on render window only
 	if (app::getWindow() == controlWindow)	
 	{
+		if( mImage ) gl::draw(mImage);
 		// Draw the params on control window only
 		mParams.draw();
 	}
@@ -259,6 +259,10 @@ void WarpingApp::draw()
 				// there are two ways you can use the warps:
 				if( mUseBeginEnd )
 				{
+					mSrcArea = mImage.getBounds();
+					// adjust the content size of the warps
+					// useless? Warp::setSize( mWarps, mImage.getSize() );
+
 					// a) issue your draw commands between begin() and end() statements
 					warp->begin();
 

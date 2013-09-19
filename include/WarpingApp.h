@@ -85,7 +85,6 @@ private:
 	float					mFrameRate;
 	bool					mFullScreen;
 	ci::params::InterfaceGl	mParams;
-	Channel32f mChannel;
 	// Reymenta
 	void				quitProgram();
 	ColorAf				mBackgroundColor;
